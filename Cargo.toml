@@ -4,3 +4,17 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+actix-web = "4"
+config = "0.15.25"
+serde = { version = "1", features = ["derive"] }
+sqlx = { version = "0.8.6", default-features = false, features = [
+  "tls-rustls",
+  "macros",
+  "postgres",
+  "chrono",
+  "migrate",
+  "runtime-tokio",
+] }
+
+[dev-dependencies]
+reqwest = "0.13.4"

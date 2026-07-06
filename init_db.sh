@@ -25,16 +25,18 @@ DB_NAME=${POSTGRES_DB:=newsletter}
 DB_PORT=${POSTGRES_PORT:=5432}
 
 #
-if ! docker start newsletter 2>/dev/null; then
-	echo "Container doesn't exist, creating..."
-	# Launch postgres using docker
-	docker run -d \
-		--name newsletter \
-		-e POSTGRES_USER=${DB_USER} \
-		-e POSTGRES_PASSWORD=${DB_PASSWORD} \
-		-e POSTGRES_DB=${DB_NAME} \
-		-p ${DB_PORT}:5432 \
-		postgres:18.3 -N 1000
+if [[ -z "${SKIP_DOCKER}"]]; then
+  if ! docker start newsletter 2>/dev/null; then
+    echo "Container doesn't exist, creating..."
+    # Launch postgres using docker
+    docker run -d \
+      --name newsletter \
+      -e POSTGRES_USER=${DB_USER} \
+      -e POSTGRES_PASSWORD=${DB_PASSWORD} \
+      -e POSTGRES_DB=${DB_NAME} \
+      -p ${DB_PORT}:5432 \
+      postgres:18.3 -N 1000
+  fi
 fi
 
 sleep 2
@@ -51,3 +53,4 @@ done
 export DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}
 
 sqlx database create
+sqlx migrate run

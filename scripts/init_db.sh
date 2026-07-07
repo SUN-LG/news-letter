@@ -3,16 +3,16 @@ set -x
 set -eo pipefail
 
 if [ -f "$HOME/.cargo/env" ]; then
-	source "$HOME/.cargo/env"
+  source "$HOME/.cargo/env"
 fi
 
 if ! [ -x "$(command -v sqlx)" ]; then
-	echo >&2 "Error: sqlx is not installed."
-	echo >&2 "Use:"
-	echo >&2 "
+  echo >&2 "Error: sqlx is not installed."
+  echo >&2 "Use:"
+  echo >&2 "
  cargo install --version=0.5.7 sqlx-cli --no-default-features --features postgres"
-	echo >&2 "to install it."
-	exit 1
+  echo >&2 "to install it."
+  exit 1
 fi
 
 # check if a custom user has been set, otherwise default to 'postgres'
@@ -25,7 +25,7 @@ DB_NAME=${POSTGRES_DB:=newsletter}
 DB_PORT=${POSTGRES_PORT:=5432}
 
 #
-if [[ -z "${SKIP_DOCKER}"]]; then
+if [[ -z "${SKIP_DOCKER}" ]]; then
   if ! docker start newsletter 2>/dev/null; then
     echo "Container doesn't exist, creating..."
     # Launch postgres using docker
@@ -44,8 +44,8 @@ sleep 2
 # Keep pinging postgres until it's ready to accept commands
 export PGPASSWORD="${DB_PASSWORD}"
 until docker exec -i newsletter psql -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q'; do
-	>&2 echo "Postgres is still unavailable - sleeping"
-	sleep 1
+  >&2 echo "Postgres is still unavailable - sleeping"
+  sleep 1
 done
 
 >&2 echo "Postgres is up and running on port ${DB_PORT}!"

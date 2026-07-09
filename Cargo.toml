@@ -19,3 +19,4 @@ sqlx = { version = "0.8.6", default-features = false, features = [
 
 [dev-dependencies]
 reqwest = "0.13.4"
+uuid = { version = "1.23", features = ["v4"] }

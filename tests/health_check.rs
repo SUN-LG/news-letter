@@ -7,8 +7,9 @@
 
 use std::net::TcpListener;
 
-use news_letter::config::get_config;
-use sqlx::{Connection, PgConnection, PgPool};
+use news_letter::config::{DatabaseSettings, get_config};
+use sqlx::{Connection, Executor, PgConnection, PgPool};
+use uuid::Uuid;
 
 #[actix_web::test]
 async fn health_check_works() {
@@ -38,10 +39,10 @@ async fn spawn_app() -> TestApp {
   let port = listener.local_addr().unwrap().port();
   let address = format!("http://127.0.0.1:{}", port);
 
-  let config = get_config().expect("Failed to read config");
-  let connection_pool = PgPool::connect(&config.database.connection_string())
-    .await
-    .expect("Failed to connect to Postgres");
+  let mut config = get_config().expect("Failed to read config");
+  config.database.database_name = Uuid::new_v4().to_string();
+
+  let connection_pool = configure_database(&config.database).await;
 
   let server =
     news_letter::startup::run(listener, connection_pool.clone()).expect("Failed to spawn our app.");
@@ -51,6 +52,28 @@ async fn spawn_app() -> TestApp {
     address,
     db_pool: connection_pool,
   }
+}
+
+pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
+  let mut connection = PgConnection::connect(&config.connection_string_without_db())
+    .await
+    .expect("Failed to connect to Postgres");
+
+  connection
+    .execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
+    .await
+    .expect("Failed to create database");
+
+  let pool = PgPool::connect(&config.connection_string())
+    .await
+    .expect("Failed to connect to Postgres");
+
+  sqlx::migrate!("./migrations")
+    .run(&pool)
+    .await
+    .expect("Failed to migrate the database");
+
+  pool
 }
 
 #[actix_web::test]
